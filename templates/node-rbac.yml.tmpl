@@ -1,0 +1,69 @@
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1alpha1
+metadata:
+  name: node-monitor
+rules:
+  - resources: ["nodes"]
+    verbs: ["list", "watch"]
+    apiGroups: [""]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1alpha1
+metadata:
+  name: monitor-appliance-nodes
+subjects:
+  - kind: Group
+    name: system:serviceaccounts
+roleRef:
+  kind: ClusterRole
+  name: node-monitor
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1alpha1
+metadata:
+  name: node-event-writer
+rules:
+  - resources: ["events"]
+    verbs: ["create", "patch"]
+    apiGroups: [""]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1alpha1
+metadata:
+  name: write-appliance-node-events
+  namespace: default
+subjects:
+  - kind: Group
+    name: system:serviceaccounts
+roleRef:
+  kind: ClusterRole
+  name: node-event-writer
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1alpha1
+metadata:
+  name: {{NAMESPACE_NAME}}-node-handler
+rules:
+  - resources: ["nodes"]
+    resourceNames: ["{{NODE_NAME}}"]
+    verbs: ["get"]
+    apiGroups: [""]
+  - resources: ["nodes/status"]
+    resourceNames: ["{{NODE_NAME}}"]
+    verbs: ["update"]
+    apiGroups: [""]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1alpha1
+metadata:
+  name: {{NAMESPACE_NAME}}-handle-nodes
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: {{NAMESPACE_NAME}}
+roleRef:
+  kind: ClusterRole
+  name: {{NAMESPACE_NAME}}-node-handler
+  apiGroup: rbac.authorization.k8s.io

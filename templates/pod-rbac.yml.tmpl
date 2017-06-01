@@ -1,0 +1,52 @@
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1alpha1
+metadata:
+  name: pod-monitor
+rules:
+  - resources: ["pods", "services"]
+    verbs: ["list", "watch"]
+    apiGroups: [""]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1alpha1
+metadata:
+  name: monitor-appliance-pods
+subjects:
+  - kind: Group
+    name: system:serviceaccounts
+roleRef:
+  kind: ClusterRole
+  name: pod-monitor
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1alpha1
+metadata:
+  name: pod-handler
+rules:
+  - resources: ["pods", "secrets", "configmaps"]
+    verbs: ["get"]
+    apiGroups: [""]
+  - resources: ["pods"]
+    verbs: ["delete"]
+    apiGroups: [""]
+  - resources: ["pods/status"]
+    verbs: ["update"]
+    apiGroups: [""]
+  - resources: ["events"]
+    verbs: ["create", "patch"]
+    apiGroups: [""]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1alpha1
+metadata:
+  name: handle-pods
+  namespace: {{NAMESPACE_NAME}}
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: {{NAMESPACE_NAME}}
+roleRef:
+  kind: ClusterRole
+  name: pod-handler
+  apiGroup: rbac.authorization.k8s.io
